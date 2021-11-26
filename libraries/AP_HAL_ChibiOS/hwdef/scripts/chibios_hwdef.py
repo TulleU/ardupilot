@@ -1002,7 +1002,6 @@ def write_mcu_config(f):
 #define HAL_STORAGE_SIZE 16384
 #define HAL_USE_RTC FALSE
 #define DISABLE_SERIAL_ESC_COMM TRUE
-#define NO_DATAFLASH TRUE
 ''')
         if not env_vars['EXTERNAL_PROG_FLASH_MB']:
             f.write('''
@@ -2568,8 +2567,12 @@ def add_apperiph_defaults(f):
 #ifndef HAL_WATCHDOG_ENABLED_DEFAULT
 #define HAL_WATCHDOG_ENABLED_DEFAULT true
 #endif
+
+#ifndef AP_FETTEC_ONEWIRE_ENABLED
+#define AP_FETTEC_ONEWIRE_ENABLED 0
+#endif
 ''')
-            
+
 
 # process input file
 for fname in args.hwdef:
