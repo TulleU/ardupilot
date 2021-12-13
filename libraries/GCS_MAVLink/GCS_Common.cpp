@@ -306,7 +306,7 @@ void GCS_MAVLINK::send_battery_status(const uint8_t instance) const
                                     battery.get_mavlink_charge_state(instance), // battery charge state
                                     cell_volts_ext, // Cell 11..14 voltages
                                     0, // battery mode
-                                    0); // fault_bitmask
+                                    battery.get_mavlink_fault_bitmask(instance));   // fault_bitmask
 #else
     (void)instance;
 #endif
@@ -2232,6 +2232,9 @@ void GCS::setup_uarts()
     }
 #if !HAL_MINIMIZE_FEATURES
     ltm_telemetry.init();
+#endif
+
+#if AP_DEVO_TELEM_ENABLED
     devo_telemetry.init();
 #endif
 }

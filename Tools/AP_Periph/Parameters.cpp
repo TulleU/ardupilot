@@ -29,6 +29,10 @@ extern const AP_HAL::HAL &hal;
 #define AP_PERIPH_MSP_PORT_DEFAULT 1
 #endif
 
+#ifndef AP_PERIPH_ESC_TELEM_PORT_DEFAULT
+#define AP_PERIPH_ESC_TELEM_PORT_DEFAULT -1
+#endif
+
 #ifndef HAL_DEFAULT_MAV_SYSTEM_ID
 #define MAV_SYSTEM_ID 3
 #else
@@ -298,10 +302,21 @@ const AP_Param::Info AP_Periph_FW::var_info[] = {
     // @Param: ESC_PWM_TYPE
     // @DisplayName: Output PWM type
     // @Description: This selects the output PWM type, allowing for normal PWM continuous output, OneShot, brushed or DShot motor output
-    // @Values: 0:Normal,1:OneShot,2:OneShot125,3:Brushed,4:DShot150,5:DShot300,6:DShot600,7:DShot1200
+    // @Values: 1:Normal,2:OneShot,3:OneShot125,4:Brushed,5:DShot150,6:DShot300,7:DShot600,8:DShot1200
     // @User: Advanced
     // @RebootRequired: True
     GSCALAR(esc_pwm_type, "ESC_PWM_TYPE",     0),
+
+#if HAL_WITH_ESC_TELEM && !HAL_GCS_ENABLED
+    // @Param: ESC_TELEM_PORT
+    // @DisplayName: ESC Telemetry Serial Port
+    // @Description: This is the serial port number where SERIALx_PROTOCOL will be set to ESC Telemetry
+    // @Range: 0 10
+    // @Increment: 1
+    // @User: Advanced
+    // @RebootRequired: True
+    GSCALAR(esc_telem_port, "ESC_TELEM_PORT", AP_PERIPH_ESC_TELEM_PORT_DEFAULT),
+#endif
 #endif
 
 #ifdef HAL_PERIPH_ENABLE_MSP
