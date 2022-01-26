@@ -46,6 +46,7 @@ extern const AP_HAL::HAL& hal;
 #include <AP_Mount/AP_Mount.h>
 #include <AP_VideoTX/AP_VideoTX.h>
 #include <AP_Torqeedo/AP_Torqeedo.h>
+#include <AP_Vehicle/AP_Vehicle_Type.h>
 
 #define SWITCH_DEBOUNCE_TIME_MS  200
 
@@ -689,6 +690,7 @@ void RC_Channel::do_aux_function_avoid_adsb(const AuxSwitchPos ch_flag)
 
 void RC_Channel::do_aux_function_avoid_proximity(const AuxSwitchPos ch_flag)
 {
+#if !APM_BUILD_TYPE(APM_BUILD_ArduPlane)
     AC_Avoid *avoid = AP::ac_avoid();
     if (avoid == nullptr) {
         return;
@@ -705,6 +707,7 @@ void RC_Channel::do_aux_function_avoid_proximity(const AuxSwitchPos ch_flag)
         avoid->proximity_avoidance_enable(false);
         break;
     }
+#endif // !APM_BUILD_ArduPlane
 }
 
 void RC_Channel::do_aux_function_camera_trigger(const AuxSwitchPos ch_flag)
@@ -896,7 +899,7 @@ bool RC_Channel::run_aux_function(aux_func_t ch_option, AuxSwitchPos pos, AuxFun
     const bool ret = do_aux_function(ch_option, pos);
 
     // @LoggerMessage: AUXF
-    // @Description: Auixillary function invocation information
+    // @Description: Auxiliary function invocation information
     // @Field: TimeUS: Time since system startup
     // @Field: function: ID of triggered function
     // @Field: pos: switch position when function triggered
@@ -905,7 +908,7 @@ bool RC_Channel::run_aux_function(aux_func_t ch_option, AuxSwitchPos pos, AuxFun
     AP::logger().Write(
         "AUXF",
         "TimeUS,function,pos,source,result",
-        "s----",
+        "s#---",
         "F----",
         "QHBBB",
         AP_HAL::micros64(),
@@ -1038,6 +1041,7 @@ bool RC_Channel::do_aux_function(const aux_func_t ch_option, const AuxSwitchPos 
         break;
 
     case AUX_FUNC::DISABLE_AIRSPEED_USE: {
+#if AP_AIRSPEED_ENABLED
         AP_Airspeed *airspeed = AP::airspeed();
         if (airspeed == nullptr) {
             break;
@@ -1052,6 +1056,7 @@ bool RC_Channel::do_aux_function(const aux_func_t ch_option, const AuxSwitchPos 
             airspeed->force_disable_use(false);
             break;
         }
+#endif
         break;
     }
 

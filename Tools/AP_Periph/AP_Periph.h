@@ -46,11 +46,6 @@
     #endif
 #endif
 
-#if defined(HAL_PERIPH_ENABLE_BATTERY_MPPT_PACKETDIGITAL) && HAL_MAX_CAN_PROTOCOL_DRIVERS < 2
-#error "Battery MPPT PacketDigital driver requires at least two CAN Ports"
-#endif
-
-
 #include "Parameters.h"
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
@@ -252,6 +247,7 @@ public:
     uint32_t last_gps_update_ms;
     uint32_t last_baro_update_ms;
     uint32_t last_airspeed_update_ms;
+    bool saw_gps_lock_once;
 
     static AP_Periph_FW *_singleton;
 

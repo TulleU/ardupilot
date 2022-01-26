@@ -34,7 +34,7 @@
 
 #define POSCONTROL_OVERSPEED_GAIN_Z             2.0f    // gain controlling rate at which z-axis speed is brought back within SPEED_UP and SPEED_DOWN range
 
-#define POSCONTROL_RELAX_TC                     0.16f   // This is used to decay the relevant variable to 5% in half a second.
+#define POSCONTROL_RELAX_TC                     0.16f   // This is used to decay the I term to 5% in half a second.
 
 class AC_PosControl
 {
@@ -87,10 +87,6 @@ public:
     void set_pos_error_max_xy_cm(float error_max) { _p_pos_xy.set_error_max(error_max); }
     float get_pos_error_max_xy_cm() { return _p_pos_xy.get_error_max(); }
 
-    /// init_xy_controller - initialise the position controller to the current position, velocity, acceleration and attitude.
-    ///     This function is the default initialisation for any position control that provides position, velocity and acceleration.
-    void init_xy_controller();
-
     /// init_xy_controller_stopping_point - initialise the position controller to the stopping point with zero velocity and acceleration.
     ///     This function should be used when the expected kinematic path assumes a stationary initial condition but does not specify a specific starting position.
     ///     The starting position can be retrieved by getting the position target using get_pos_target_cm() after calling this function.
@@ -99,6 +95,11 @@ public:
     // relax_velocity_controller_xy - initialise the position controller to the current position and velocity with decaying acceleration.
     ///     This function decays the output acceleration by 95% every half second to achieve a smooth transition to zero requested acceleration.
     void relax_velocity_controller_xy();
+
+    // init_xy_controller - initialise the position controller to the current position, velocity, acceleration and attitude.
+    ///     This function is the default initialisation for any position control that provides position, velocity and acceleration.
+    ///     This function is private and contains all the shared xy axis initialisation functions
+    void init_xy_controller();
 
     /// input_accel_xy - calculate a jerk limited path from the current position, velocity and acceleration to an input acceleration.
     ///     The function takes the current position, velocity, and acceleration and calculates the required jerk limited adjustment to the acceleration for the next time dt.
@@ -166,10 +167,6 @@ public:
     /// get_max_speed_down_cms - accessors for current maximum down speed in cm/s.  Will be a negative number
     float get_max_speed_down_cms() const { return _vel_max_down_cms; }
 
-    /// init_z_controller - initialise the position controller to the current position, velocity, acceleration and attitude.
-    ///     This function is the default initialisation for any position control that provides position, velocity and acceleration.
-    void init_z_controller();
-
     /// init_z_controller_no_descent - initialise the position controller to the current position, velocity, acceleration and attitude.
     ///     This function is the default initialisation for any position control that provides position, velocity and acceleration.
     ///     This function does not allow any negative velocity or acceleration
@@ -183,6 +180,11 @@ public:
     // relax_z_controller - initialise the position controller to the current position and velocity with decaying acceleration.
     ///     This function decays the output acceleration by 95% every half second to achieve a smooth transition to zero requested acceleration.
     void relax_z_controller(float throttle_setting);
+
+    // init_z_controller - initialise the position controller to the current position, velocity, acceleration and attitude.
+    ///     This function is the default initialisation for any position control that provides position, velocity and acceleration.
+    ///     This function is private and contains all the shared z axis initialisation functions
+    void init_z_controller();
 
     /// input_accel_z - calculate a jerk limited path from the current position, velocity and acceleration to an input acceleration.
     ///     The function takes the current position, velocity, and acceleration and calculates the required jerk limited adjustment to the acceleration for the next time dt.
@@ -390,14 +392,6 @@ protected:
             uint16_t vehicle_horiz_vel_override : 1; // 1 if we should use _vehicle_horiz_vel as our velocity process variable for one timestep
     } _flags;
 
-    /// init_xy - initialise the position controller to the current position, velocity and acceleration.
-    ///     This function is private and contains all the shared xy axis initialisation functions
-    void init_xy();
-
-    /// init_z - initialise the position controller to the current position, velocity and acceleration.
-    ///     This function is private and contains all the shared z axis initialisation functions
-    void init_z();
-
     // get throttle using vibration-resistant calculation (uses feed forward with manually calculated gain)
     float get_throttle_with_vibration_override();
 
@@ -412,6 +406,9 @@ protected:
 
     // calculate_yaw_and_rate_yaw - calculate the vehicle yaw and rate of yaw.
     bool calculate_yaw_and_rate_yaw();
+
+    // calculate_overspeed_gain - calculated increased maximum acceleration and jerk if over speed condition is detected
+    float calculate_overspeed_gain();
 
     /// initialise and check for ekf position resets
     void init_ekf_xy_reset();

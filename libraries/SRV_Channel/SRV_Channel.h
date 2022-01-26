@@ -179,6 +179,14 @@ public:
         k_nr_aux_servo_functions         ///< This must be the last enum value (only add new values _before_ this one)
     } Aux_servo_function_t;
 
+    // check if a function is valid for indexing into functions
+    static bool valid_function(Aux_servo_function_t fn) {
+        return fn >= 0 && fn < k_nr_aux_servo_functions;
+    }
+    bool valid_function(void) const {
+        return valid_function(function);
+    }
+    
     // used to get min/max/trim limit value based on reverse
     enum class Limit {
         TRIM,
@@ -270,7 +278,7 @@ private:
     AP_Int16 servo_trim;
     // reversal, following convention that 1 means reversed, 0 means normal
     AP_Int8 reversed;
-    AP_Int16 function;
+    AP_Enum16<Aux_servo_function_t> function;
 
     // a pending output value as PWM
     uint16_t output_pwm;
@@ -359,6 +367,9 @@ public:
     // get scaled output for the given function type.
     static float get_output_scaled(SRV_Channel::Aux_servo_function_t function);
 
+    // get slew limited scaled output for the given function type
+    static float get_slew_limited_output_scaled(SRV_Channel::Aux_servo_function_t function);
+
     // get pwm output for the first channel of the given function type.
     static bool get_output_pwm(SRV_Channel::Aux_servo_function_t function, uint16_t &value);
 
@@ -373,7 +384,7 @@ public:
     static uint16_t get_output_channel_mask(SRV_Channel::Aux_servo_function_t function);
     
     // limit slew rate to given limit in percent per second
-    static void limit_slew_rate(SRV_Channel::Aux_servo_function_t function, float slew_rate, float dt);
+    static void set_slew_rate(SRV_Channel::Aux_servo_function_t function, float slew_rate, uint16_t range, float dt);
 
     // call output_ch() on all channels
     static void output_ch_all(void);
@@ -611,6 +622,16 @@ private:
     }
 
     static bool emergency_stop;
+
+    // linked list for slew rate handling
+    struct slew_list {
+        slew_list(SRV_Channel::Aux_servo_function_t _func) : func(_func) {};
+        const SRV_Channel::Aux_servo_function_t func;
+        float last_scaled_output;
+        float max_change;
+        slew_list * next;
+    };
+    static slew_list *_slew;
 
     // semaphore for multi-thread use of override_counter array
     HAL_Semaphore override_counter_sem;

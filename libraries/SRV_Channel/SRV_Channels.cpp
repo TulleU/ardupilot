@@ -68,6 +68,7 @@ bool SRV_Channels::initialised;
 bool SRV_Channels::emergency_stop;
 Bitmask<SRV_Channel::k_nr_aux_servo_functions> SRV_Channels::function_mask;
 SRV_Channels::srv_function SRV_Channels::functions[SRV_Channel::k_nr_aux_servo_functions];
+SRV_Channels::slew_list *SRV_Channels::_slew;
 
 const AP_Param::GroupInfo SRV_Channels::var_info[] = {
 #if (NUM_SERVO_CHANNELS >= 1)
@@ -229,7 +230,7 @@ const AP_Param::GroupInfo SRV_Channels::var_info[] = {
     // @Param: _GPIO_MASK
     // @DisplayName: Servo GPIO mask
     // @Description: This sets a bitmask of outputs which will be available as GPIOs. Any auxillary output with either the function set to -1 or with the corresponding bit set in this mask will be available for use as a GPIO pin
-    // @Bitmask: 0: Servo 1, 1: Servo 2, 2: Servo 3, 3: Servo 4, 4: Servo 5, 5: Servo 6, 6: Servo 7, 7: Servo 8, 8: Servo 9, 9: Servo 10, 10: Servo 11, 11: Servo 12, 12: Servo 13, 13: Servo 14, 14: Servo 15, 15: Servo 16
+    // @Bitmask: 0:Servo 1, 1:Servo 2, 2:Servo 3, 3:Servo 4, 4:Servo 5, 5:Servo 6, 6:Servo 7, 7:Servo 8, 8:Servo 9, 9:Servo 10, 10:Servo 11, 11:Servo 12, 12:Servo 13, 13:Servo 14, 14:Servo 15, 15:Servo 16
     // @User: Advanced
     // @RebootRequired: True
     AP_GROUPINFO("_GPIO_MASK",  26, SRV_Channels, gpio_mask, 0),
@@ -306,6 +307,15 @@ void SRV_Channels::setup_failsafe_trim_all_non_motors(void)
  */
 void SRV_Channels::calc_pwm(void)
 {
+    // slew rate limit functions
+    for (slew_list *slew = _slew; slew; slew = slew->next) {
+        if (is_positive(slew->max_change)) {
+            // treat negative or zero slew rate as disabled
+            functions[slew->func].output_scaled = constrain_float(functions[slew->func].output_scaled, slew->last_scaled_output - slew->max_change, slew->last_scaled_output + slew->max_change);
+        }
+        slew->last_scaled_output = functions[slew->func].output_scaled;
+    }
+
     WITH_SEMAPHORE(_singleton->override_counter_sem);
 
     for (uint8_t i=0; i<NUM_SERVO_CHANNELS; i++) {
@@ -317,7 +327,9 @@ void SRV_Channels::calc_pwm(void)
             channels[i].set_override(true);
             override_counter[i]--;
         }
-        channels[i].calc_pwm(functions[channels[i].function].output_scaled);
+        if (channels[i].valid_function()) {
+            channels[i].calc_pwm(functions[channels[i].function.get()].output_scaled);
+        }
     }
 }
 

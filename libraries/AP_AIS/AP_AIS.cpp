@@ -89,7 +89,7 @@ void AP_AIS::update()
     }
 
     // read any available lines
-    uint32_t nbytes = MAX(_uart->available(),1024U);
+    uint32_t nbytes = MIN(_uart->available(),1024U);
     while (nbytes-- > 0) {
         const int16_t byte = _uart->read();
         if (byte == -1) {
@@ -292,7 +292,7 @@ bool AP_AIS::get_vessel_index(uint32_t mmsi, uint16_t &index, uint32_t lat, uint
     }
 
     struct Location current_loc;
-    if (!AP::ahrs().get_position(current_loc)) {
+    if (!AP::ahrs().get_location(current_loc)) {
         return false;
     }
 

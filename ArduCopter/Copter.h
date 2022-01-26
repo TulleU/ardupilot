@@ -41,6 +41,7 @@
 #include <AP_InertialSensor/AP_InertialSensor.h>                // ArduPilot Mega Inertial Sensor (accel & gyro) Library
 #include <AP_AHRS/AP_AHRS.h>                                    // AHRS (Attitude Heading Reference System) interface library for ArduPilot
 #include <AP_Mission/AP_Mission.h>                              // Mission command library
+#include <AP_Mission/AP_Mission_ChangeDetector.h>               // Mission command change detection library
 #include <AC_AttitudeControl/AC_AttitudeControl_Multi.h>        // Attitude control library
 #include <AC_AttitudeControl/AC_AttitudeControl_Multi_6DoF.h>   // 6DoF Attitude control library
 #include <AC_AttitudeControl/AC_AttitudeControl_Heli.h>         // Attitude control library for traditional helicopter
@@ -48,7 +49,6 @@
 #include <AP_Motors/AP_Motors.h>            // AP Motors library
 #include <AP_Stats/AP_Stats.h>              // statistics library
 #include <Filter/Filter.h>                  // Filter library
-#include <AP_Airspeed/AP_Airspeed.h>        // needed for AHRS build
 #include <AP_Vehicle/AP_Vehicle.h>          // needed for AHRS build
 #include <AP_InertialNav/AP_InertialNav.h>  // inertial navigation library
 #include <AC_WPNav/AC_WPNav.h>              // ArduCopter waypoint navigation library
@@ -124,9 +124,7 @@
 #if AP_TERRAIN_AVAILABLE
  # include <AP_Terrain/AP_Terrain.h>
 #endif
-#if OPTFLOW == ENABLED
  # include <AP_OpticalFlow/AP_OpticalFlow.h>
-#endif
 #if RANGEFINDER_ENABLED == ENABLED
  # include <AP_RangeFinder/AP_RangeFinder.h>
 #endif
@@ -307,7 +305,7 @@ private:
     AP_Arming_Copter arming;
 
     // Optical flow sensor
-#if OPTFLOW == ENABLED
+#if AP_OPTICALFLOW_ENABLED
     OpticalFlow optflow;
 #endif
 
@@ -787,7 +785,6 @@ private:
     void Log_Write_Control_Tuning();
     void Log_Write_Attitude();
     void Log_Write_EKF_POS();
-    void Log_Write_MotBatt();
     void Log_Write_Data(LogDataID id, int32_t value);
     void Log_Write_Data(LogDataID id, uint32_t value);
     void Log_Write_Data(LogDataID id, int16_t value);
@@ -798,7 +795,8 @@ private:
 #if FRAME_CONFIG == HELI_FRAME
     void Log_Write_Heli(void);
 #endif
-    void Log_Write_GuidedTarget(ModeGuided::SubMode submode, const Vector3f& pos_target, bool terrain_alt, const Vector3f& vel_target, const Vector3f& accel_target);
+    void Log_Write_Guided_Position_Target(ModeGuided::SubMode submode, const Vector3f& pos_target, bool terrain_alt, const Vector3f& vel_target, const Vector3f& accel_target);
+    void Log_Write_Guided_Attitude_Target(ModeGuided::SubMode target_type, float roll, float pitch, float yaw, const Vector3f &ang_vel, float thrust, float climb_rate);
     void Log_Write_SysID_Setup(uint8_t systemID_axis, float waveform_magnitude, float frequency_start, float frequency_stop, float time_fade_in, float time_const_freq, float time_record, float time_fade_out);
     void Log_Write_SysID_Data(float waveform_time, float waveform_sample, float waveform_freq, float angle_x, float angle_y, float angle_z, float accel_x, float accel_y, float accel_z);
     void Log_Write_Vehicle_Startup_Messages();
@@ -863,10 +861,8 @@ private:
     void read_rangefinder(void);
     bool rangefinder_alt_ok() const;
     bool rangefinder_up_ok() const;
-    void rpm_update();
     void update_optical_flow(void);
     void compass_cal_update(void);
-    void init_proximity();
 
     // RC_Channel.cpp
     void save_trim();
@@ -975,7 +971,7 @@ private:
 #if MODE_SMARTRTL_ENABLED == ENABLED
     ModeSmartRTL mode_smartrtl;
 #endif
-#if !HAL_MINIMIZE_FEATURES && OPTFLOW == ENABLED
+#if !HAL_MINIMIZE_FEATURES && AP_OPTICALFLOW_ENABLED
     ModeFlowHold mode_flowhold;
 #endif
 #if MODE_ZIGZAG_ENABLED == ENABLED

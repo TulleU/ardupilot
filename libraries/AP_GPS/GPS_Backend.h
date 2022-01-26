@@ -22,6 +22,16 @@
 #include <AP_RTC/JitterCorrection.h>
 #include "AP_GPS.h"
 
+#ifndef AP_GPS_DEBUG_LOGGING_ENABLED
+// enable this to log all bytes from the GPS. Also needs a call to
+// log_data() in each backend
+#define AP_GPS_DEBUG_LOGGING_ENABLED 0
+#endif
+
+#if AP_GPS_DEBUG_LOGGING_ENABLED
+#include <AP_HAL/utility/RingBuffer.h>
+#endif
+
 class AP_GPS_Backend
 {
 public:
@@ -81,7 +91,7 @@ public:
 
     // return iTOW of last message, or zero if not supported
     uint32_t get_last_itow(void) const {
-        return _last_itow;
+        return (_pseudo_itow_delta_ms == 0)?(_last_itow*1000ULL):((_pseudo_itow/1000ULL) + _pseudo_itow_delta_ms);
     }
 
     enum DriverOptions : int16_t {
@@ -140,14 +150,32 @@ protected:
         return gps.get_type(state.instance);
     }
 
+    virtual void set_pps_desired_freq(uint8_t freq) {}
+
+#if AP_GPS_DEBUG_LOGGING_ENABLED
+    // log some data for debugging
+    void log_data(const uint8_t *data, uint16_t length);
+#endif
+
+protected:
+    uint64_t _last_pps_time_us;
+    JitterCorrection jitter_correction;
+
 private:
     // itow from previous message
     uint32_t _last_itow;
     uint64_t _pseudo_itow;
+    int32_t _pseudo_itow_delta_ms;
     uint32_t _last_ms;
     uint32_t _rate_ms;
     uint32_t _last_rate_ms;
     uint16_t _rate_counter;
-
-    JitterCorrection jitter_correction;
+#if AP_GPS_DEBUG_LOGGING_ENABLED
+    struct {
+        int fd = -1;
+        ByteBuffer buf{32768};
+        bool io_registered;
+    } logging;
+    void logging_update(void);
+#endif
 };
