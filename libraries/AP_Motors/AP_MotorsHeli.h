@@ -24,7 +24,7 @@
 #define AP_MOTORS_HELI_COLLECTIVE_HOVER_MAX     0.8f // maximum possible hover throttle
 #define AP_MOTORS_HELI_COLLECTIVE_MIN_DEG      -90.0f // minimum collective blade pitch angle in deg
 #define AP_MOTORS_HELI_COLLECTIVE_MAX_DEG       90.0f // maximum collective blade pitch angle in deg
-#define AP_MOTORS_HELI_COLLECTIVE_LAND_MIN      -1.0f // minimum landed collective blade pitch angle in deg for modes using althold
+#define AP_MOTORS_HELI_COLLECTIVE_LAND_MIN      -2.0f // minimum landed collective blade pitch angle in deg for modes using althold
 
 
 // flybar types
@@ -59,11 +59,6 @@ public:
 
     // output_min - sets servos to neutral point with motors stopped
     void output_min() override;
-
-    // output_test_seq - spin a motor at the pwm value specified
-    //  motor_seq is the motor's sequence number from 1 to the number of motors on the frame
-    //  pwm value is an actual pwm value that will be output, normally in the range of 1000 ~ 2000
-    virtual void output_test_seq(uint8_t motor_seq, int16_t pwm) override = 0;
 
     //
     // heli specific methods

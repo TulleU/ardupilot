@@ -13,6 +13,7 @@
 #include <AC_AttitudeControl/AC_AttitudeControl_Multi.h> // Attitude control library
 #include <AP_InertialNav/AP_InertialNav.h>
 #include <AC_AttitudeControl/AC_PosControl.h>
+#include <AC_AttitudeControl/AC_WeatherVane.h>
 #include <AC_WPNav/AC_WPNav.h>
 #include <AC_WPNav/AC_Loiter.h>
 #include <AC_Fence/AC_Fence.h>
@@ -215,7 +216,7 @@ private:
     float get_pilot_input_yaw_rate_cds(void) const;
 
     // get overall desired yaw rate in cd/s
-    float get_desired_yaw_rate_cds(void);
+    float get_desired_yaw_rate_cds(bool weathervane=true);
     
     // get desired climb rate in cm/s
     float get_pilot_desired_climb_rate_cms(void) const;
@@ -372,13 +373,8 @@ private:
         float last_pct;
     } vel_forward;
 
-    struct {
-        AP_Float gain;
-        AP_Float min_roll;
-        uint32_t last_pilot_input_ms;
-        float last_output;
-    } weathervane;
-    
+    AC_WeatherVane *weathervane;
+
     bool initialised;
 
     Location last_auto_target;
